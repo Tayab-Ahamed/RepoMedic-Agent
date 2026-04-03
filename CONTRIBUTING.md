@@ -5,7 +5,7 @@ Thank you for your interest in contributing!
 ## Development Setup
 
 ```bash
-git clone https://github.com/your-org/repomedic-agent
+git clone https://github.com/your-org/RepoMedic-Agent
 cd repomedic-agent
 npm install
 ```
