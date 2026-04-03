@@ -37,7 +37,7 @@ RepoMedic runs **6 sequential skills** against any repository:
 
 ```bash
 # Clone the repo
-git clone https://github.com/your-org/repomedic-agent
+git clone https://github.com/your-org/RepoMedic-Agent
 cd repomedic-agent
 
 # Install dependencies
