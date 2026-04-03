@@ -2,12 +2,6 @@
 name: dependency-analysis
 description: "Parses package.json to detect outdated dependencies, known vulnerability patterns, abandoned packages, license risks, and dependency bloat. Uses npm registry API — no system binaries required."
 allowed-tools: Bash Read Write
-version: "1.0"
-author: RepoMedic
-tags:
-  - dependencies
-  - security
-  - supply-chain
 ---
 
 # Skill: Dependency Analysis

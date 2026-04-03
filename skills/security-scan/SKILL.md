@@ -2,12 +2,6 @@
 name: security-scan
 description: "SecretSweep — scans repository files for exposed secrets, API keys, tokens, credentials, and risky configuration patterns using regex heuristics and entropy analysis. Node.js only, zero system dependencies."
 allowed-tools: Bash Read Write
-version: "1.0"
-author: RepoMedic
-tags:
-  - security
-  - secrets
-  - owasp
 ---
 
 # Skill: Security Scan (SecretSweep)

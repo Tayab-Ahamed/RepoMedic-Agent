@@ -2,12 +2,6 @@
 name: doc-analysis
 description: "DocDrift — analyzes repository documentation for completeness, freshness, and accuracy. Checks README quality, inline code documentation, API docs, and compares documented surface area against actual code."
 allowed-tools: Bash Read Write
-version: "1.0"
-author: RepoMedic
-tags:
-  - documentation
-  - readme
-  - quality
 ---
 
 # Skill: Documentation Analysis (DocDrift)

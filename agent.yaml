@@ -32,22 +32,12 @@ tags:
 
 metadata:
   author: RepoMedic Team
-  homepage: https://github.com/repomedic/repomedic-agent
   license: MIT
-  category: developer-tools
 
 compliance:
-  risk_level: low
-  data_classification: internal
+  risk_tier: low
   recordkeeping:
     audit_logging: true
 
 delegation:
-  mode: sequential
-  skills_order:
-    - repo-analysis
-    - security-scan
-    - doc-analysis
-    - test-analysis
-    - dependency-analysis
-    - scoring
+  mode: auto

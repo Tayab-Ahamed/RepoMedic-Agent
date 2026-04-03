@@ -2,12 +2,6 @@
 name: scoring
 description: "Aggregates findings from all upstream skills into a weighted health score (0–100), produces a structured JSON report, generates a Top 5 Issues summary, Quick Wins list, and Risk Radar. This is the final skill in the pipeline."
 allowed-tools: Bash Read Write
-version: "1.0"
-author: RepoMedic
-tags:
-  - scoring
-  - reporting
-  - aggregation
 ---
 
 # Skill: Scoring & Report Generation

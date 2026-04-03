@@ -2,12 +2,6 @@
 name: test-analysis
 description: "Analyzes test coverage, test file structure, testing framework usage, and identifies untested critical paths. Flags missing tests for exported functions, API routes, and core business logic."
 allowed-tools: Bash Read Write
-version: "1.0"
-author: RepoMedic
-tags:
-  - testing
-  - coverage
-  - quality
 ---
 
 # Skill: Test Analysis

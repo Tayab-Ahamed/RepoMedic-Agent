@@ -2,12 +2,6 @@
 name: repo-analysis
 description: "Fetches and maps a GitHub repository structure. Accepts a GitHub URL or local path, enumerates all files, detects language composition, identifies architectural patterns, and produces a structural map for downstream skills."
 allowed-tools: Bash Read Write
-version: "1.0"
-author: RepoMedic
-tags:
-  - analysis
-  - structure
-  - architecture
 ---
 
 # Skill: Repository Analysis

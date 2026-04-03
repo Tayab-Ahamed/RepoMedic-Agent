@@ -1,106 +1,78 @@
 name: file-reader
+version: "1.0.0"
 description: >
   Reads and parses individual files from a fetched repository tree. Handles
-  text content extraction, JSON parsing, YAML parsing, and basic AST-level
-  analysis for JavaScript/TypeScript files (export detection, function counting).
+  text content extraction, JSON parsing, YAML parsing, and basic analysis
+  for JavaScript/TypeScript files including export detection and JSDoc coverage.
 
-version: "1.0"
-
-implementation:
-  type: node
-  entry: src/tools/fileReader.js
-  runtime: node18+
-
-input:
-  schema:
-    type: object
-    required:
-      - files
-    properties:
-      files:
-        type: array
-        description: "List of file paths to read and parse"
-        items:
-          type: string
-        maxItems: 200
-      repo_path:
+input_schema:
+  type: object
+  required:
+    - files
+  properties:
+    files:
+      type: array
+      description: "List of file paths to read and parse"
+      items:
         type: string
-        description: "Base path or GitHub raw content base URL"
-      parse_mode:
-        type: string
-        enum: ["raw", "ast-lite", "json", "yaml"]
-        default: "raw"
-        description: "How to parse the file content"
-      extract_exports:
-        type: boolean
-        default: false
-        description: "For JS/TS files: detect and count exported symbols"
-      extract_headings:
-        type: boolean
-        default: false
-        description: "For Markdown files: extract all heading structure"
-      max_file_size_kb:
-        type: integer
-        default: 256
-        description: "Skip files larger than this (KB)"
+      maxItems: 200
+    repo_path:
+      type: string
+      description: "Base path or GitHub raw content base URL"
+    in_memory_contents:
+      type: object
+      description: "Key-value map of filepath to content"
+    extract_exports:
+      type: boolean
+      default: false
+      description: "For JS/TS files: detect and count exported symbols"
+    extract_headings:
+      type: boolean
+      default: false
+      description: "For Markdown files: extract all heading structure"
+    max_file_size_kb:
+      type: integer
+      default: 256
 
-output:
-  schema:
-    type: object
-    properties:
-      results:
-        type: array
-        items:
-          type: object
-          properties:
-            path:
-              type: string
-            content:
-              type: string
-            size_bytes:
-              type: integer
-            line_count:
-              type: integer
-            parsed:
+output_schema:
+  type: object
+  properties:
+    results:
+      type: array
+      items:
+        type: object
+        properties:
+          path:
+            type: string
+          content:
+            type: string
+          size_bytes:
+            type: integer
+          line_count:
+            type: integer
+          exports:
+            type: array
+            items:
               type: object
-              description: "Parsed structure (if parse_mode != raw)"
-            exports:
-              type: array
-              description: "Exported symbol names (if extract_exports=true)"
-              items:
-                type: object
-                properties:
-                  name:
-                    type: string
-                  type:
-                    type: string
-                    enum: ["function", "class", "const", "default", "type", "interface"]
-                  line:
-                    type: integer
-                  has_jsdoc:
-                    type: boolean
-            headings:
-              type: array
-              description: "Markdown heading tree (if extract_headings=true)"
-              items:
-                type: object
-                properties:
-                  level:
-                    type: integer
-                  text:
-                    type: string
-                  line:
-                    type: integer
-            error:
-              type: string
-              description: "Error message if file could not be read"
-
-supported_formats:
-  text: [".js", ".ts", ".jsx", ".tsx", ".mjs", ".cjs", ".md", ".mdx", ".txt", ".rst"]
-  config: [".json", ".yaml", ".yml", ".toml", ".env", ".env.example"]
-  skipped: ["binary files", ".png", ".jpg", ".pdf", ".zip", ".tar", ".gz"]
-
-notes:
-  - "Uses regex-based export detection (not full AST) for performance"
-  - "Large files (>256KB) are skipped by default to protect memory"
-  - "Sensitive file content (.env values) is redacted in output"
+              properties:
+                name:
+                  type: string
+                type:
+                  type: string
+                line:
+                  type: integer
+                has_jsdoc:
+                  type: boolean
+          headings:
+            type: array
+            items:
+              type: object
+              properties:
+                level:
+                  type: integer
+                text:
+                  type: string
+                line:
+                  type: integer
+          error:
+            type: string
