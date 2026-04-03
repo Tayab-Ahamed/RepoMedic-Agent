@@ -1,0 +1,110 @@
+name: repo-fetch
+description: >
+  Fetches repository file tree and file contents from GitHub via the REST API,
+  or walks a local directory path. Returns a structured file tree with metadata.
+  No git clone required — uses GitHub API for remote repos.
+
+version: "1.0"
+
+implementation:
+  type: node
+  entry: src/tools/repoFetch.js
+  runtime: node18+
+
+input:
+  schema:
+    type: object
+    required:
+      - source
+    properties:
+      source:
+        type: string
+        description: "GitHub URL (https://github.com/owner/repo) or absolute local path"
+        examples:
+          - "https://github.com/expressjs/express"
+          - "/home/user/my-project"
+      branch:
+        type: string
+        default: "main"
+        description: "Branch or tag to fetch (GitHub only)"
+      github_pat:
+        type: string
+        description: "GitHub Personal Access Token for private repos (optional)"
+      max_files:
+        type: integer
+        default: 500
+        minimum: 1
+        maximum: 2000
+        description: "Maximum number of files to enumerate"
+      include_content:
+        type: boolean
+        default: false
+        description: "Whether to fetch file contents (adds latency). Leave false for tree-only."
+      content_extensions:
+        type: array
+        items:
+          type: string
+        default: [".js", ".ts", ".jsx", ".tsx", ".json", ".yaml", ".yml", ".md", ".env"]
+        description: "Extensions to fetch content for when include_content is true"
+
+output:
+  schema:
+    type: object
+    properties:
+      repo:
+        type: string
+        description: "Repository identifier (owner/repo or local path)"
+      source_type:
+        type: string
+        enum: ["github", "local"]
+      branch:
+        type: string
+      fetched_at:
+        type: string
+        format: date-time
+      total_files:
+        type: integer
+      tree:
+        type: array
+        description: "Flat list of all files with metadata"
+        items:
+          type: object
+          properties:
+            path:
+              type: string
+            type:
+              type: string
+              enum: ["file", "dir"]
+            size:
+              type: integer
+              description: "File size in bytes"
+            extension:
+              type: string
+            content:
+              type: string
+              description: "File content (only present if include_content=true and extension matches)"
+      errors:
+        type: array
+        description: "Non-fatal errors encountered during fetch"
+        items:
+          type: string
+
+errors:
+  - code: REPO_NOT_FOUND
+    message: "Repository not found. Check URL and access permissions."
+  - code: AUTH_REQUIRED
+    message: "Repository requires authentication. Provide a github_pat."
+  - code: RATE_LIMITED
+    message: "GitHub API rate limit exceeded. Provide a PAT for higher limits."
+  - code: LOCAL_PATH_NOT_FOUND
+    message: "Local path does not exist."
+
+rate_limits:
+  github_unauthenticated: "60 requests/hour"
+  github_authenticated: "5000 requests/hour"
+  note: "Use github_pat to avoid rate limiting on large repos"
+
+security:
+  - "Never log or persist the github_pat value"
+  - "Only read operations — never writes to the target repository"
+  - "Skip binary files to avoid memory issues"

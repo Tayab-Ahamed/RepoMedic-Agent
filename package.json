@@ -1,0 +1,57 @@
+{
+  "name": "repomedic-agent",
+  "version": "0.2.0",
+  "description": "AI-powered repository health analyzer — audit codebases for quality, security, documentation, tests, and compliance.",
+  "main": "src/index.js",
+  "type": "module",
+  "bin": {
+    "repomedic": "./src/cli.js"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "analyze": "node src/index.js",
+    "demo": "node example-usage/run-example.js",
+    "validate": "npx gitagent validate",
+    "info": "npx gitagent info",
+    "test": "node --test src/__tests__/*.test.js",
+    "lint": "node --check src/**/*.js"
+  },
+  "keywords": [
+    "gitagent",
+    "gitclaw",
+    "repo-analysis",
+    "security",
+    "code-quality",
+    "hackathon",
+    "devtools",
+    "ai-agent"
+  ],
+  "author": "RepoMedic Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "ora": "^8.0.1",
+    "commander": "^12.0.0",
+    "yaml": "^2.4.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0"
+  },
+  "files": [
+    "src/",
+    "skills/",
+    "tools/",
+    "knowledge/",
+    "agent.yaml",
+    "SOUL.md",
+    "RULES.md",
+    "README.md"
+  ],
+  "gitagent": {
+    "spec_version": "0.1.0",
+    "agent": "repomedic-agent"
+  }
+}

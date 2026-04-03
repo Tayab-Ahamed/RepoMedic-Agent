@@ -1,0 +1,117 @@
+name: dependency-parser
+description: >
+  Parses package.json (and optionally package-lock.json / yarn.lock) to extract
+  all declared dependencies with version ranges. Queries the npm registry to
+  fetch current versions, deprecation status, and license information for each
+  package. Returns a structured dependency health report.
+
+version: "1.0"
+
+implementation:
+  type: node
+  entry: src/tools/dependencyParser.js
+  runtime: node18+
+
+input:
+  schema:
+    type: object
+    required:
+      - package_json_content
+    properties:
+      package_json_content:
+        type: string
+        description: "Raw string content of package.json"
+      lockfile_content:
+        type: string
+        description: "Raw content of package-lock.json or yarn.lock (optional, improves accuracy)"
+      lockfile_type:
+        type: string
+        enum: ["npm", "yarn", "pnpm"]
+        description: "Lockfile format"
+      check_registry:
+        type: boolean
+        default: true
+        description: "Whether to query npm registry for latest versions (requires network)"
+      include_dev:
+        type: boolean
+        default: false
+        description: "Include devDependencies in analysis (true for full audit)"
+      batch_size:
+        type: integer
+        default: 10
+        description: "Registry requests per batch (rate limiting)"
+
+output:
+  schema:
+    type: object
+    properties:
+      package_name:
+        type: string
+      package_version:
+        type: string
+      node_engine:
+        type: string
+        description: "Required Node.js version from engines field"
+      has_lockfile:
+        type: boolean
+      lockfile_type:
+        type: string
+      total_dependencies:
+        type: integer
+      total_dev_dependencies:
+        type: integer
+      dependencies:
+        type: array
+        items:
+          type: object
+          properties:
+            name:
+              type: string
+            declared_version:
+              type: string
+              description: "Version range in package.json"
+            resolved_version:
+              type: string
+              description: "Actual installed version (from lockfile if available)"
+            latest_version:
+              type: string
+              description: "Current latest on npm registry"
+            is_deprecated:
+              type: boolean
+            deprecation_message:
+              type: string
+            last_publish:
+              type: string
+              format: date-time
+            weekly_downloads:
+              type: integer
+            license:
+              type: string
+            license_risk:
+              type: string
+              enum: ["none", "low", "medium", "high"]
+            version_gap:
+              type: string
+              enum: ["current", "patch", "minor", "major", "unknown"]
+            is_dev:
+              type: boolean
+      summary:
+        type: object
+        properties:
+          outdated_count:
+            type: integer
+          deprecated_count:
+            type: integer
+          high_license_risk_count:
+            type: integer
+          major_version_gaps:
+            type: integer
+
+rate_limiting:
+  strategy: "batched with 100ms delay between batches"
+  fallback: "If registry unreachable, report version gap as 'unknown'"
+
+notes:
+  - "Uses Promise.allSettled() — a single failed registry lookup does not abort the analysis"
+  - "Respects npm registry rate limits by batching and delaying requests"
+  - "Does not run npm audit (requires npm CLI). Uses pattern matching instead."

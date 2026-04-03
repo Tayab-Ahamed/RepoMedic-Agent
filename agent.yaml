@@ -1,0 +1,53 @@
+spec_version: "0.1.0"
+name: repomedic-agent
+version: 0.2.0
+description: "AI-powered repository health analyzer that audits codebases for quality, security, documentation, tests, and compliance."
+
+model:
+  preferred: "claude-sonnet-4-5-20250929"
+  fallback:
+    - "anthropic:claude-opus-4-5-20250929"
+    - "openai:gpt-4o"
+
+skills:
+  - repo-analysis
+  - security-scan
+  - doc-analysis
+  - test-analysis
+  - dependency-analysis
+  - scoring
+
+tools:
+  - repo-fetch
+  - file-reader
+  - dependency-parser
+  - secret-scanner
+
+tags:
+  - hackathon
+  - repo-analysis
+  - security
+  - code-quality
+  - devtools
+
+metadata:
+  author: RepoMedic Team
+  homepage: https://github.com/repomedic/repomedic-agent
+  license: MIT
+  category: developer-tools
+
+compliance:
+  risk_level: low
+  data_classification: internal
+  recordkeeping:
+    audit_logging: true
+
+delegation:
+  mode: sequential
+  skills_order:
+    - repo-analysis
+    - security-scan
+    - doc-analysis
+    - test-analysis
+    - dependency-analysis
+    - scoring
