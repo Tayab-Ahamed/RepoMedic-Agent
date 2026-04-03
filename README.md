@@ -220,7 +220,3 @@ This agent is fully compliant with the gitagent 0.1.0 specification:
 MIT — See [LICENSE](LICENSE)
 
 ---
-
-## 🏆 Built for the GitAgent Hackathon
-
-> *"Your agent is only as good as its soul. RepoMedic's soul is a brutally honest senior engineer who has read every CVE report published since 2018."*
