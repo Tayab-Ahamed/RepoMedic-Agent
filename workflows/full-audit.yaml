@@ -1,0 +1,113 @@
+name: full-audit
+description: "Complete repository health audit — runs all 6 skills in sequence and produces a scored report with actionable findings."
+version: "1.0"
+
+triggers:
+  - manual
+  - schedule: weekly
+
+inputs:
+  repo_url:
+    type: string
+    required: true
+    description: "GitHub URL or local path to analyze"
+  branch:
+    type: string
+    default: "main"
+  github_pat:
+    type: string
+    required: false
+    description: "PAT for private repos"
+  output_file:
+    type: string
+    default: "repomedic-report.json"
+
+steps:
+  fetch:
+    skill: repo-analysis
+    tool: repo-fetch
+    inputs:
+      source: ${{ inputs.repo_url }}
+      branch: ${{ inputs.branch }}
+      github_pat: ${{ inputs.github_pat }}
+      include_content: true
+      max_files: 800
+    outputs:
+      - repo_tree
+      - file_contents
+      - package_json
+
+  security:
+    skill: security-scan
+    tool: secret-scanner
+    depends_on: [fetch]
+    inputs:
+      files: ${{ steps.fetch.outputs.file_contents }}
+      include_entropy_scan: true
+    outputs:
+      - security_findings
+      - security_score
+
+  docs:
+    skill: doc-analysis
+    depends_on: [fetch]
+    tool: file-reader
+    inputs:
+      tree: ${{ steps.fetch.outputs.repo_tree }}
+      file_contents: ${{ steps.fetch.outputs.file_contents }}
+      extract_exports: true
+      extract_headings: true
+    outputs:
+      - doc_findings
+      - doc_score
+
+  tests:
+    skill: test-analysis
+    depends_on: [fetch]
+    inputs:
+      tree: ${{ steps.fetch.outputs.repo_tree }}
+      file_contents: ${{ steps.fetch.outputs.file_contents }}
+      package_json: ${{ steps.fetch.outputs.package_json }}
+    outputs:
+      - test_findings
+      - test_score
+
+  dependencies:
+    skill: dependency-analysis
+    depends_on: [fetch]
+    tool: dependency-parser
+    inputs:
+      package_json_content: ${{ steps.fetch.outputs.package_json }}
+      check_registry: true
+      include_dev: false
+    outputs:
+      - dep_findings
+      - dep_score
+
+  score:
+    skill: scoring
+    depends_on: [security, docs, tests, dependencies]
+    inputs:
+      repo_analysis: ${{ steps.fetch.outputs }}
+      security_findings: ${{ steps.security.outputs.security_findings }}
+      doc_findings: ${{ steps.docs.outputs.doc_findings }}
+      test_findings: ${{ steps.tests.outputs.test_findings }}
+      dependency_findings: ${{ steps.dependencies.outputs.dep_findings }}
+    outputs:
+      - final_report
+      - health_score
+
+outputs:
+  report: ${{ steps.score.outputs.final_report }}
+  score: ${{ steps.score.outputs.health_score }}
+  file: ${{ inputs.output_file }}
+
+error_handling:
+  on_failure:
+    action: report_partial
+    message: "Analysis incomplete — results shown for completed skills only"
+
+notifications:
+  on_complete:
+    format: console_summary
+    include: [score, top_issues, quick_wins]

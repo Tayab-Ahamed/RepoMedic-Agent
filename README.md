@@ -1,9 +1,11 @@
 # 🏥 RepoMedic — Repository Health Agent
 
+[![CI](https://github.com/Tayab-Ahamed/RepoMedic-Agent/actions/workflows/validate.yml/badge.svg)](https://github.com/Tayab-Ahamed/RepoMedic-Agent/actions/workflows/validate.yml)
 [![gitagent](https://img.shields.io/badge/gitagent-0.1.0-blue)](https://gitagent.sh)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen)](https://nodejs.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Hackathon](https://img.shields.io/badge/GitAgent-Hackathon-orange)](https://gitagent.sh)
+[![Changelog](https://img.shields.io/badge/changelog-v0.2.0-informational)](CHANGELOG.md)
 
 > **Your brutally honest senior engineer, automated.**
 
@@ -37,7 +39,7 @@ RepoMedic runs **6 sequential skills** against any repository:
 
 ```bash
 # Clone the repo
-git clone https://github.com/Tayab-Ahamed/RepoMedic-Agent
+git clone https://github.com/your-org/repomedic-agent
 cd repomedic-agent
 
 # Install dependencies
@@ -163,6 +165,12 @@ repomedic-agent/
 ├── agent.yaml              # gitagent manifest
 ├── SOUL.md                 # Agent identity & personality
 ├── RULES.md                # Hard constraints & output contract
+├── AGENTS.md               # Framework-agnostic fallback instructions
+├── CHANGELOG.md            # Version history
+├── CONTRIBUTING.md         # Contribution guide
+├── SECURITY.md             # Vulnerability disclosure policy
+├── CODE_OF_CONDUCT.md      # Community standards
+├── .env.example            # Environment variable template
 ├── skills/                 # 6 skill definitions (SKILL.md)
 │   ├── repo-analysis/
 │   ├── security-scan/
@@ -175,13 +183,21 @@ repomedic-agent/
 │   ├── file-reader.yaml
 │   ├── dependency-parser.yaml
 │   └── secret-scanner.yaml
-├── src/                    # Node.js implementation
-│   ├── index.js            # Main orchestrator + CLI
-│   ├── tools/              # Tool implementations
-│   └── analyzers/          # Per-skill analyzers
+├── workflows/              # Multi-step procedure definitions
+│   ├── full-audit.yaml     # Complete 6-skill audit
+│   └── security-only.yaml # Fast security-focused scan
+├── examples/               # Calibration interactions (few-shot)
+│   ├── good-repo.md        # High-score calibration
+│   ├── bad-repo.md         # Low-score calibration
+│   └── edge-cases.md       # Tricky repo handling rules
 ├── knowledge/              # Agent reference knowledge
 ├── memory/                 # Persistent agent memory
 ├── hooks/                  # Lifecycle hooks
+├── src/                    # Node.js implementation
+│   ├── cli.js              # npx repomedic bin entry
+│   ├── index.js            # Main orchestrator + CLI
+│   ├── tools/              # Tool implementations
+│   └── analyzers/          # Per-skill analyzers
 └── example-usage/          # Demo scripts + sample report
 ```
 
@@ -220,3 +236,7 @@ This agent is fully compliant with the gitagent 0.1.0 specification:
 MIT — See [LICENSE](LICENSE)
 
 ---
+
+## 🏆 Built for the GitAgent Hackathon
+
+> *"Your agent is only as good as its soul. RepoMedic's soul is a brutally honest senior engineer who has read every CVE report published since 2018."*

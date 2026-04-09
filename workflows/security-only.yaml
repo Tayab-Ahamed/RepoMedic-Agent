@@ -1,0 +1,49 @@
+name: security-only
+description: "Fast security-focused scan — runs only secret detection and dependency CVE checks. Completes in under 15 seconds."
+version: "1.0"
+
+triggers:
+  - pre_commit
+  - pull_request
+
+inputs:
+  repo_url:
+    type: string
+    required: true
+  github_pat:
+    type: string
+    required: false
+
+steps:
+  fetch:
+    skill: repo-analysis
+    tool: repo-fetch
+    inputs:
+      source: ${{ inputs.repo_url }}
+      include_content: true
+      max_files: 300
+      content_extensions: [".js", ".ts", ".env", ".json", ".yaml", ".yml"]
+
+  secrets:
+    skill: security-scan
+    tool: secret-scanner
+    depends_on: [fetch]
+    inputs:
+      files: ${{ steps.fetch.outputs.file_contents }}
+      include_entropy_scan: true
+
+  deps:
+    skill: dependency-analysis
+    tool: dependency-parser
+    depends_on: [fetch]
+    inputs:
+      package_json_content: ${{ steps.fetch.outputs.package_json }}
+      check_registry: true
+
+outputs:
+  security_findings: ${{ steps.secrets.outputs.findings }}
+  vulnerable_deps: ${{ steps.deps.outputs.high_severity }}
+
+on_high_severity:
+  action: block
+  message: "Security scan found high-severity issues. Fix before merging."
