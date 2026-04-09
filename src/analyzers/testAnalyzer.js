@@ -2,7 +2,7 @@
  * testAnalyzer.js — Test coverage proxy analyzer.
  */
 
-import { extname, basename } from 'path';
+import { extname } from 'node:path';
 
 const TEST_FILE_PATTERNS = [
   /__tests__\//, /\/tests?\//, /\/spec\//, /\/e2e\//,
@@ -63,6 +63,12 @@ function normalizeImportPath(importPath, testFilePath) {
 
 function detectFramework(packageJson) {
   const deps = { ...packageJson?.dependencies, ...packageJson?.devDependencies };
+  const testScript = packageJson?.scripts?.test || '';
+
+  if (testScript.includes('node --test')) {
+    return 'node:test';
+  }
+
   for (const [fw, markers] of Object.entries(FRAMEWORK_MARKERS)) {
     if (markers.some(m => deps[m])) return fw;
   }
@@ -77,7 +83,13 @@ function hasTestScript(packageJson) {
 
 function hasCoverageConfig(packageJson) {
   const scripts = packageJson?.scripts || {};
-  return Object.values(scripts).some(s => s.includes('--coverage') || s.includes('c8') || s.includes('nyc'));
+  return Object.values(scripts).some(s =>
+    s.includes('--coverage') ||
+    s.includes('--test-coverage') ||
+    s.includes('--experimental-test-coverage') ||
+    s.includes('c8') ||
+    s.includes('nyc')
+  );
 }
 
 /**
@@ -91,7 +103,8 @@ export function analyzeTests({ tree, fileContents = {}, packageJson = null }) {
   const sourceFiles = paths.filter(p => {
     const ext = extname(p);
     return ['.js', '.ts', '.jsx', '.tsx'].includes(ext) && !isTestFile(p) &&
-      !p.includes('node_modules') && !p.includes('dist/') && !p.includes('build/');
+      !p.includes('node_modules') && !p.includes('dist/') && !p.includes('build/') &&
+      !p.endsWith('/cli.js');
   });
 
   const testFiles = paths.filter(p => isTestFile(p));

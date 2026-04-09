@@ -4,8 +4,8 @@
  * Zero system dependencies — uses Node.js built-ins + fetch API (Node 18+).
  */
 
-import { readdir, stat, readFile } from 'fs/promises';
-import { join, relative, extname, basename } from 'path';
+import { readdir, stat, readFile } from 'node:fs/promises';
+import { basename, extname, join, relative, resolve } from 'node:path';
 
 const BINARY_EXTENSIONS = new Set([
   '.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.ico',
@@ -20,6 +20,31 @@ const SKIP_DIRS = new Set([
   'node_modules', '.git', '.svn', 'dist', 'build', 'out',
   '.next', '.nuxt', '.cache', 'coverage', '__pycache__', '.idea', '.vscode'
 ]);
+
+const CONTENT_BASENAMES = new Set([
+  '.env',
+  '.env.local',
+  '.env.production',
+  '.env.development',
+  '.env.test',
+  '.env.example',
+  '.env.sample',
+  '.gitignore',
+  '.npmrc'
+]);
+
+function normalizePath(filePath) {
+  return filePath.split('\\').join('/');
+}
+
+function shouldIncludeContent(filePath, extension, contentExtensions) {
+  const name = basename(filePath).toLowerCase();
+  return (
+    contentExtensions.includes(extension) ||
+    CONTENT_BASENAMES.has(name) ||
+    name.startsWith('.env.')
+  );
+}
 
 /**
  * Parse GitHub URL into owner/repo/branch.
@@ -104,7 +129,7 @@ async function walkLocalDir(dirPath, baseDir, maxFiles, results = []) {
       await walkLocalDir(join(dirPath, entry.name), baseDir, maxFiles, results);
     } else if (entry.isFile()) {
       const fullPath = join(dirPath, entry.name);
-      const relPath = relative(baseDir, fullPath);
+      const relPath = normalizePath(relative(baseDir, fullPath));
       let fileSize = 0;
       try {
         const s = await stat(fullPath);
@@ -173,7 +198,7 @@ export async function fetchRepo({
     // Optionally fetch content for selected files
     if (include_content) {
       const filesToFetch = tree.filter(f =>
-        content_extensions.includes(f.extension) &&
+        shouldIncludeContent(f.path, f.extension, content_extensions) &&
         !BINARY_EXTENSIONS.has(f.extension) &&
         f.size < 256 * 1024 // 256KB limit
       );
@@ -201,7 +226,7 @@ export async function fetchRepo({
 
   } else {
     // Local path
-    const { existsSync } = await import('fs');
+    const { existsSync } = await import('node:fs');
     if (!existsSync(source)) {
       throw Object.assign(new Error(`Local path not found: ${source}`), { code: 'LOCAL_PATH_NOT_FOUND' });
     }
@@ -216,7 +241,7 @@ export async function fetchRepo({
 
     if (include_content) {
       for (const file of tree) {
-        if (content_extensions.includes(file.extension) && !BINARY_EXTENSIONS.has(file.extension) && file.size < 256 * 1024) {
+        if (shouldIncludeContent(file.path, file.extension, content_extensions) && !BINARY_EXTENSIONS.has(file.extension) && file.size < 256 * 1024) {
           try {
             file.content = await readFile(join(source, file.path), 'utf-8');
           } catch { /* skip unreadable */ }
@@ -225,7 +250,7 @@ export async function fetchRepo({
     }
 
     return {
-      repo: source,
+      repo: basename(resolve(source)),
       source_type: 'local',
       branch: null,
       fetched_at: new Date().toISOString(),

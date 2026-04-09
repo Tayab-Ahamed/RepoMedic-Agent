@@ -93,6 +93,45 @@ function lineFromIndex(content, index) {
   return content.substring(0, index).split('\n').length;
 }
 
+function normalizePath(filePath) {
+  return filePath.split('\\').join('/');
+}
+
+function lineTextFromIndex(content, index) {
+  const start = content.lastIndexOf('\n', index - 1) + 1;
+  const end = content.indexOf('\n', index);
+  return content.slice(start, end === -1 ? content.length : end);
+}
+
+function isMarkdownDoc(filePath) {
+  return /\.(md|mdx|rst|txt)$/i.test(filePath);
+}
+
+function shouldIgnorePatternMatch({ filePath, content, index, matchedText, patternName }) {
+  const lineText = lineTextFromIndex(content, index);
+  const trimmed = lineText.trim();
+
+  if (/\bregex\s*:/i.test(lineText)) {
+    return true;
+  }
+
+  if (lineText.includes(`/${matchedText}/`) || lineText.includes(`\`${matchedText}\``)) {
+    return true;
+  }
+
+  if (isMarkdownDoc(filePath)) {
+    if (trimmed.startsWith('|')) {
+      return true;
+    }
+
+    if (patternName === 'TODO comment near credential' && /^[#>\-*]/.test(trimmed)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 // ─── Main Scanner ──────────────────────────────────────────────────────────
 
 /**
@@ -115,30 +154,31 @@ export function scanSecrets(files, {
   const skipped = [];
 
   for (const file of files) {
-    const { path: filePath, content } = file;
+    const normalizedPath = normalizePath(file.path);
+    const { content } = file;
 
     // Skip based on path patterns
-    if (SKIP_PATH_PATTERNS.some(p => p.test(filePath))) {
-      skipped.push({ path: filePath, reason: 'excluded path pattern' });
+    if (SKIP_PATH_PATTERNS.some(p => p.test(normalizedPath))) {
+      skipped.push({ path: normalizedPath, reason: 'excluded path pattern' });
       continue;
     }
 
-    const ext = filePath.split('.').pop()?.toLowerCase();
+    const ext = normalizedPath.split('.').pop()?.toLowerCase();
     if (BINARY_EXTS.has(`.${ext}`)) {
-      skipped.push({ path: filePath, reason: 'binary file' });
+      skipped.push({ path: normalizedPath, reason: 'binary file' });
       continue;
     }
 
     if (!content) continue;
     scanned++;
 
-    const fileName = filePath.split('/').pop();
+    const fileName = normalizedPath.split('/').pop();
 
     // Check for .env files committed directly
     if (HIGH_RISK_FILENAMES.test(fileName)) {
       findings.push({
         id: `SEC-${String(findingCounter++).padStart(3, '0')}`,
-        file: filePath,
+        file: normalizedPath,
         line: 1,
         severity: 'high',
         pattern_name: '.env file present in repository',
@@ -154,9 +194,18 @@ export function scanSecrets(files, {
       const re = new RegExp(pattern.regex.source, pattern.regex.flags);
       let m;
       while ((m = re.exec(content)) !== null) {
+        if (shouldIgnorePatternMatch({
+          filePath: normalizedPath,
+          content,
+          index: m.index,
+          matchedText: m[0],
+          patternName: pattern.name
+        })) {
+          continue;
+        }
         findings.push({
           id: `SEC-${String(findingCounter++).padStart(3, '0')}`,
-          file: filePath,
+          file: normalizedPath,
           line: lineFromIndex(content, m.index),
           severity: 'high',
           pattern_name: pattern.name,
@@ -172,9 +221,18 @@ export function scanSecrets(files, {
       let m;
       while ((m = re.exec(content)) !== null) {
         const secretValue = m[1] || m[0];
+        if (shouldIgnorePatternMatch({
+          filePath: normalizedPath,
+          content,
+          index: m.index,
+          matchedText: secretValue,
+          patternName: pattern.name
+        })) {
+          continue;
+        }
         findings.push({
           id: `SEC-${String(findingCounter++).padStart(3, '0')}`,
-          file: filePath,
+          file: normalizedPath,
           line: lineFromIndex(content, m.index),
           severity: 'medium',
           pattern_name: pattern.name,
@@ -189,9 +247,18 @@ export function scanSecrets(files, {
       const re = new RegExp(pattern.regex.source, pattern.regex.flags);
       let m;
       while ((m = re.exec(content)) !== null) {
+        if (shouldIgnorePatternMatch({
+          filePath: normalizedPath,
+          content,
+          index: m.index,
+          matchedText: m[0],
+          patternName: pattern.name
+        })) {
+          continue;
+        }
         findings.push({
           id: `SEC-${String(findingCounter++).padStart(3, '0')}`,
-          file: filePath,
+          file: normalizedPath,
           line: lineFromIndex(content, m.index),
           severity: 'low',
           pattern_name: pattern.name,
@@ -206,11 +273,11 @@ export function scanSecrets(files, {
       const entropyMatches = scanEntropy(content, entropy_threshold);
       for (const em of entropyMatches) {
         // Skip if already caught by a named pattern
-        const alreadyCaught = findings.some(f => f.file === filePath && Math.abs(f.line - lineFromIndex(content, em.index)) <= 1);
+        const alreadyCaught = findings.some(f => f.file === normalizedPath && Math.abs(f.line - lineFromIndex(content, em.index)) <= 1);
         if (!alreadyCaught) {
           findings.push({
             id: `SEC-${String(findingCounter++).padStart(3, '0')}`,
-            file: filePath,
+            file: normalizedPath,
             line: lineFromIndex(content, em.index),
             severity: 'medium',
             pattern_name: 'High-entropy string in sensitive variable',

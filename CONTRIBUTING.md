@@ -1,46 +1,47 @@
 # Contributing to RepoMedic
 
-Thank you for your interest in contributing!
+Thanks for taking the time to improve the project.
 
-## Development Setup
+## Local setup
 
 ```bash
-git clone https://github.com/your-org/repomedic-agent
-cd repomedic-agent
+git clone https://github.com/Tayab-Ahamed/RepoMedic-Agent.git
+cd RepoMedic-Agent
 npm install
 ```
 
-## Running Tests
+## Before you open a pull request
 
 ```bash
 npm test
+npm run lint
+npm run validate
 ```
 
-## Running Locally
+## Development workflow
 
-```bash
-node src/index.js --repo https://github.com/expressjs/express
-```
+- Use `feat/`, `fix/`, `docs/`, or `chore/` prefixes for branch names.
+- Keep changes scoped to one clear improvement when possible.
+- Add or update tests when analyzer logic, scoring, or parsing behavior changes.
+- Update documentation when CLI flags, workflows, or report output changes.
 
-## Branch Naming
+## Pull request checklist
 
-- `feat/` — new features
-- `fix/` — bug fixes
-- `docs/` — documentation only
-- `security/` — security-related changes
+1. Explain the user-facing behavior change or scoring change.
+2. Call out any changes to report shape, CLI behavior, or workflow files.
+3. Include tests for parser, analyzer, or scoring changes.
+4. Keep sample data and docs in sync if the output examples changed.
 
-## Pull Request Process
+## Project areas
 
-1. Fork the repo
-2. Create a feature branch
-3. Add tests for new functionality
-4. Ensure `npx gitagent validate` passes
-5. Open a PR against `main`
+- `src/tools/` contains low-level repo fetch, file parsing, dependency, and secret scanning helpers.
+- `src/analyzers/` contains the six audit stages and report assembly.
+- `src/__tests__/` contains the local regression suite.
+- `.github/workflows/` contains the validation and demo automation used by the repo.
 
-## Adding a New Skill
+## Good contribution candidates
 
-1. Create `skills/your-skill/SKILL.md` with YAML frontmatter
-2. Add the skill name to `agent.yaml` under `skills:`
-3. Implement the analyzer in `src/analyzers/yourSkill.js`
-4. Wire it into `src/index.js`
-5. Add scoring contribution to `src/analyzers/scorer.js`
+- Improve signal quality for findings without increasing noise.
+- Tighten report formatting or scoring explanations.
+- Expand test coverage around edge cases in local path scanning and secret detection.
+- Improve sample reports or demo flows for better offline evaluation.

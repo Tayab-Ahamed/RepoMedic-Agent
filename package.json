@@ -13,8 +13,9 @@
     "demo": "node example-usage/run-example.js",
     "validate": "npx gitagent validate",
     "info": "npx gitagent info",
-    "test": "node --test src/__tests__/*.test.js",
-    "lint": "node --check src/**/*.js"
+    "test": "node --test --test-isolation=none --test-concurrency=1 src/__tests__/index.test.js",
+    "test:coverage": "node --test --test-isolation=none --test-concurrency=1 --experimental-test-coverage src/__tests__/index.test.js",
+    "lint": "node scripts/check-syntax.mjs"
   },
   "keywords": [
     "gitagent",

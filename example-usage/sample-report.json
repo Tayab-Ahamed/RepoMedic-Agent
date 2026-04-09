@@ -1,298 +1,151 @@
 {
   "meta": {
-    "repo": "demo-org/example-app",
+    "repo": "demo-org/commerce-starter",
     "branch": "main",
-    "analyzed_at": "2025-10-15T14:22:33.000Z",
+    "analyzed_at": "2026-04-09T15:40:00.000Z",
     "agent_version": "0.2.0",
-    "total_files_analyzed": 127,
-    "total_findings": 14,
+    "total_files_analyzed": 138,
+    "total_findings": 6,
     "primary_language": "TypeScript",
-    "frameworks": ["Next.js", "Tailwind CSS", "Prisma"],
+    "frameworks": ["Next.js", "Prisma"],
     "architecture": "feature-sliced"
   },
-  "score": 62,
-  "grade": "D",
-  "label": "Poor — Significant Gaps",
+  "score": 88,
+  "grade": "B",
+  "label": "Ready",
   "breakdown": {
-    "code_quality": 18,
-    "docs": 12,
-    "security": 8,
-    "tests": 11,
-    "dependencies": 13
+    "code_quality": 22,
+    "docs": 16,
+    "security": 18,
+    "tests": 18,
+    "dependencies": 14
   },
   "issues": [
-    {
-      "id": "SEC-001",
-      "skill": "security-scan",
-      "severity": "high",
-      "title": "AWS Access Key ID",
-      "file": "src/config/aws.js",
-      "line": 8,
-      "evidence": "AKIA***REDACTED***",
-      "matched_by": "regex",
-      "impact": "Immediate AWS account compromise. Attackers can spin up compute, exfiltrate S3 data, or rack up massive bills.",
-      "remediation": "1. Revoke key immediately in AWS IAM Console. 2. Run: git filter-repo --invert-paths --path src/config/aws.js to remove from history. 3. Use IAM Roles or AWS Secrets Manager instead."
-    },
-    {
-      "id": "SEC-002",
-      "skill": "security-scan",
-      "severity": "high",
-      "title": ".env file present in repository",
-      "file": ".env",
-      "line": 1,
-      "evidence": ".env (file existence)",
-      "matched_by": "filename",
-      "impact": "Environment files often contain production credentials. Committing them exposes all configured secrets.",
-      "remediation": "1. Add \".env\" to .gitignore immediately. 2. Run: git rm --cached .env && git commit. 3. Rotate ALL credentials in the file. 4. Create .env.example with placeholder values."
-    },
-    {
-      "id": "SEC-003",
-      "skill": "security-scan",
-      "severity": "medium",
-      "title": "No SECURITY.md — missing vulnerability disclosure policy",
-      "impact": "Security researchers have no sanctioned channel to report vulnerabilities.",
-      "remediation": "Create .github/SECURITY.md with your vulnerability reporting process."
-    },
-    {
-      "id": "TEST-001",
-      "skill": "test-analysis",
-      "severity": "high",
-      "title": "Critical path untested: Authentication/Authorization (src/middleware/auth.ts)",
-      "file": "src/middleware/auth.ts",
-      "impact": "Authentication middleware has no test coverage. A regression here could allow unauthorized access to protected routes.",
-      "remediation": "Create src/middleware/auth.test.ts covering valid token, expired token, missing token, and malformed token scenarios.",
-      "suggested_test_cases": [
-        "should allow requests with valid JWT",
-        "should reject requests with expired JWT",
-        "should reject requests with no Authorization header",
-        "should reject requests with malformed token"
-      ]
-    },
-    {
-      "id": "TEST-002",
-      "skill": "test-analysis",
-      "severity": "high",
-      "title": "Critical path untested: Payment/Billing (src/services/payment.ts)",
-      "file": "src/services/payment.ts",
-      "impact": "Payment logic has zero test coverage. A silent regression could cause failed transactions or double charges.",
-      "remediation": "Create src/services/payment.test.ts. Mock Stripe API calls. Test success flow, failure handling, and webhook verification.",
-      "suggested_test_cases": [
-        "should handle valid payment intent creation",
-        "should handle Stripe API failure gracefully",
-        "should verify webhook signature before processing",
-        "should handle idempotency for duplicate requests"
-      ]
-    },
-    {
-      "id": "DEP-001",
-      "skill": "dependency-analysis",
-      "severity": "high",
-      "title": "No lockfile found (package-lock.json / yarn.lock)",
-      "impact": "Without a lockfile, npm install resolves to the latest compatible versions. A dependency update can silently break production.",
-      "remediation": "Run: npm install (generates package-lock.json). Commit the lockfile and never add it to .gitignore.",
-      "auto_fixable": true
-    },
-    {
-      "id": "DEP-002",
-      "skill": "dependency-analysis",
-      "severity": "medium",
-      "title": "jsonwebtoken@8.5.1 — Algorithm confusion / header injection",
-      "package": "jsonwebtoken",
-      "installed_version": "8.5.1",
-      "latest_version": "9.0.2",
-      "cve_pattern": "CVE-2022-23529",
-      "impact": "Algorithm confusion attacks allow forging of JWTs in older versions of jsonwebtoken.",
-      "remediation": "Run: npm install jsonwebtoken@latest",
-      "auto_fixable": true
-    },
     {
       "id": "DOC-001",
       "skill": "doc-analysis",
       "severity": "medium",
-      "title": "README missing: Configuration guide",
+      "title": "README missing deployment notes",
       "file": "README.md",
-      "impact": "Missing configuration section forces users to read source code to configure the app.",
-      "remediation": "Add a '## Configuration' section to README.md documenting all environment variables."
+      "impact": "Operators still need to read source and workflow files to understand release steps.",
+      "remediation": "Add a short deployment section covering environment variables, migration order, and rollback expectations."
+    },
+    {
+      "id": "TEST-001",
+      "skill": "test-analysis",
+      "severity": "medium",
+      "title": "Webhook handler has limited error-path coverage",
+      "file": "src/api/webhooks/stripe.ts",
+      "impact": "A malformed or replayed webhook could fail in production without a clear regression signal.",
+      "remediation": "Add tests for invalid signatures, duplicate events, and downstream timeout handling."
+    },
+    {
+      "id": "SEC-001",
+      "skill": "security-scan",
+      "severity": "medium",
+      "title": "Dependabot not configured",
+      "impact": "Dependency update drift will grow quietly over time without automated pull requests.",
+      "remediation": "Create .github/dependabot.yml with a weekly npm update schedule."
+    },
+    {
+      "id": "DEP-001",
+      "skill": "dependency-analysis",
+      "severity": "medium",
+      "title": "Two production dependencies are one major version behind",
+      "impact": "Upgrade cost tends to compound when package gaps are left alone for multiple release cycles.",
+      "remediation": "Review the changelogs and plan one controlled upgrade pass for the outdated packages."
     },
     {
       "id": "DOC-002",
       "skill": "doc-analysis",
-      "severity": "medium",
-      "title": "Missing CONTRIBUTING.md",
-      "impact": "Without contributing guidelines, contributors guess at PR process, branch naming, and code standards.",
-      "remediation": "Add CONTRIBUTING.md describing how to set up the dev environment, branch naming conventions, and PR process."
-    },
-    {
-      "id": "DOC-003",
-      "skill": "doc-analysis",
-      "severity": "medium",
-      "title": "JSDoc coverage critically low (18% of 34 exports)",
-      "impact": "Functions without documentation are black boxes. Increases onboarding time and bug risk.",
-      "remediation": "Add JSDoc comments to all exported functions. Start with the public API surface."
+      "severity": "low",
+      "title": "Public API JSDoc coverage is inconsistent",
+      "impact": "Onboarding takes longer when exported utilities need to be inferred from source.",
+      "remediation": "Add JSDoc to the remaining exported helpers in src/lib and src/server."
     },
     {
       "id": "STRUCT-001",
       "skill": "repo-analysis",
-      "severity": "medium",
-      "title": "No CI/CD configuration found",
-      "impact": "Code ships without automated testing, linting, or security checks.",
-      "remediation": "Add .github/workflows/ci.yml that runs npm test and npm run lint on every push and pull request."
-    },
-    {
-      "id": "DOC-004",
-      "skill": "doc-analysis",
-      "severity": "medium",
-      "title": "Missing LICENSE file",
-      "impact": "Without a license, the code is legally All Rights Reserved. Nobody can legally use or contribute to it.",
-      "remediation": "Add a LICENSE file. Use https://choosealicense.com to pick the right license for your project."
-    },
-    {
-      "id": "TEST-003",
-      "skill": "test-analysis",
       "severity": "low",
-      "title": "No coverage reporting configured",
-      "impact": "Without coverage metrics you have no visibility into which code is exercised by tests.",
-      "remediation": "Add --coverage flag to your test script, or configure c8 as a coverage reporter."
-    },
-    {
-      "id": "SEC-004",
-      "skill": "security-scan",
-      "severity": "medium",
-      "title": "Dependabot not configured",
-      "impact": "Without automated dependency updates, vulnerable packages will silently accumulate.",
-      "remediation": "Create .github/dependabot.yml with npm ecosystem configured for weekly updates."
+      "title": "No explicit Node version pin in .nvmrc",
+      "impact": "Contributors may run slightly different local toolchains from CI.",
+      "remediation": "Add .nvmrc or document the preferred runtime version alongside the existing engines field."
     }
   ],
   "recommendations": [
-    "Address all high-severity security findings immediately — rotate any exposed credentials before anything else",
-    "Add tests for authentication and payment flows — these are your highest-risk untested paths",
-    "Complete the README with installation, usage, and configuration sections",
-    "Run npm install to generate a lockfile and commit it",
-    "Update jsonwebtoken to latest version to patch CVE-2022-23529",
-    "Configure Dependabot (.github/dependabot.yml) to receive automated weekly dependency update PRs",
-    "Add SECURITY.md to define your vulnerability disclosure process"
+    "Add Dependabot so dependency updates arrive as routine pull requests instead of occasional cleanup work.",
+    "Expand webhook error-path coverage before the next payment-related release.",
+    "Document deployment and rollback steps in the README to reduce handoff friction."
   ],
   "ai_insights": {
     "top_issues": [
       {
         "rank": 1,
-        "id": "SEC-001",
-        "title": "AWS Access Key ID exposed in src/config/aws.js",
-        "severity": "high",
-        "skill": "security-scan",
-        "file": "src/config/aws.js",
-        "one_liner": "Immediate AWS account compromise possible — revoke this key right now."
+        "id": "TEST-001",
+        "title": "Webhook handler has limited error-path coverage",
+        "severity": "medium",
+        "skill": "test-analysis",
+        "file": "src/api/webhooks/stripe.ts",
+        "one_liner": "The main happy path is covered, but failure handling still needs explicit tests."
       },
       {
         "rank": 2,
-        "id": "SEC-002",
-        "title": ".env file committed to repository",
-        "severity": "high",
+        "id": "SEC-001",
+        "title": "Dependabot not configured",
+        "severity": "medium",
         "skill": "security-scan",
-        "file": ".env",
-        "one_liner": "All credentials in .env are exposed — rotate immediately."
+        "file": null,
+        "one_liner": "Update drift is manageable now, but automation will keep it that way."
       },
       {
         "rank": 3,
-        "id": "TEST-001",
-        "title": "Authentication middleware has no test coverage",
-        "severity": "high",
-        "skill": "test-analysis",
-        "file": "src/middleware/auth.ts",
-        "one_liner": "Auth bugs ship silently — any regression could expose protected routes."
-      },
-      {
-        "rank": 4,
-        "id": "TEST-002",
-        "title": "Payment service has no test coverage",
-        "severity": "high",
-        "skill": "test-analysis",
-        "file": "src/services/payment.ts",
-        "one_liner": "Silent payment regressions could cause failed or duplicate charges."
-      },
-      {
-        "rank": 5,
-        "id": "DEP-001",
-        "title": "No lockfile — dependency versions unpinned",
-        "severity": "high",
-        "skill": "dependency-analysis",
-        "one_liner": "Next npm install could pull a breaking or malicious package version."
+        "id": "DOC-001",
+        "title": "README missing deployment notes",
+        "severity": "medium",
+        "skill": "doc-analysis",
+        "file": "README.md",
+        "one_liner": "The product is understandable, but release steps still live mostly in team memory."
       }
     ],
     "quick_wins": [
       {
-        "id": "DEP-001",
-        "title": "Generate lockfile",
-        "severity": "high",
-        "skill": "dependency-analysis",
-        "action": "Run: npm install"
-      },
-      {
-        "id": "DEP-002",
-        "title": "Update jsonwebtoken to patch CVE",
-        "severity": "medium",
-        "skill": "dependency-analysis",
-        "action": "Run: npm install jsonwebtoken@latest"
-      },
-      {
-        "id": "SEC-003",
-        "title": "Add SECURITY.md",
+        "id": "SEC-001",
+        "title": "Add Dependabot",
         "severity": "medium",
         "skill": "security-scan",
-        "action": "Create .github/SECURITY.md with vulnerability disclosure process"
+        "action": "Create .github/dependabot.yml with weekly npm updates."
       },
       {
-        "id": "SEC-004",
-        "title": "Configure Dependabot",
-        "severity": "medium",
-        "skill": "security-scan",
-        "action": "Create .github/dependabot.yml with npm weekly schedule"
-      },
-      {
-        "id": "DOC-002",
-        "title": "Add CONTRIBUTING.md",
+        "id": "DOC-001",
+        "title": "Document deployment flow",
         "severity": "medium",
         "skill": "doc-analysis",
-        "action": "Add CONTRIBUTING.md with dev setup, branch naming, and PR process"
+        "action": "Add a deployment section to README.md."
+      },
+      {
+        "id": "STRUCT-001",
+        "title": "Pin local Node version",
+        "severity": "low",
+        "skill": "repo-analysis",
+        "action": "Add .nvmrc or document the preferred runtime version."
       }
     ],
     "risks": [
       {
         "id": "RISK-001",
-        "title": "1 high-severity secret exposed",
-        "probability": "high",
-        "impact": "critical",
-        "scenario": "Exposed AWS credentials can be scraped by bots scanning GitHub within minutes. Immediate account compromise is likely if key is active."
+        "title": "Webhook failures could be under-tested",
+        "probability": "medium",
+        "impact": "high",
+        "scenario": "Operational incidents around duplicate or malformed payment events would rely too heavily on manual validation."
       },
       {
         "id": "RISK-002",
-        "title": "Auth and payment paths have no test coverage",
-        "probability": "high",
-        "impact": "high",
-        "scenario": "Any code change to authentication or payment flows ships without automated validation."
-      },
-      {
-        "id": "RISK-003",
-        "title": "No lockfile — dependency versions unpinned",
+        "title": "Dependency updates rely on manual attention",
         "probability": "medium",
-        "impact": "high",
-        "scenario": "Next npm install could pull a breaking update or, in a supply-chain attack, a malicious package version."
-      },
-      {
-        "id": "RISK-004",
-        "title": "CVE pattern in jsonwebtoken dependency",
-        "probability": "medium",
-        "impact": "high",
-        "scenario": "jsonwebtoken@8.5.1 is vulnerable to algorithm confusion attacks (CVE-2022-23529). JWTs could be forged."
-      },
-      {
-        "id": "RISK-005",
-        "title": "No CI/CD — code ships without automated checks",
-        "probability": "high",
         "impact": "medium",
-        "scenario": "Every commit to main goes directly to production without running tests or security checks."
+        "scenario": "Important package updates may sit longer than intended without automated reminders."
       }
     ]
   },
-  "summary": "demo-org/example-app scores 62/100 (D — Poor — Significant Gaps). There are 4 high-severity findings that require immediate attention. The weakest area is security (8/20 points). Meaningful remediation is required. Address high-severity findings before the next deployment."
+  "summary": "demo-org/commerce-starter scores 88/100 (B - Ready). The codebase is in strong shape overall, with the remaining work centered on release documentation, webhook resilience, and routine dependency automation."
 }

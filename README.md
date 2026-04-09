@@ -1,242 +1,159 @@
-# 🏥 RepoMedic — Repository Health Agent
+# RepoMedic
 
 [![CI](https://github.com/Tayab-Ahamed/RepoMedic-Agent/actions/workflows/validate.yml/badge.svg)](https://github.com/Tayab-Ahamed/RepoMedic-Agent/actions/workflows/validate.yml)
 [![gitagent](https://img.shields.io/badge/gitagent-0.1.0-blue)](https://gitagent.sh)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen)](https://nodejs.org)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Hackathon](https://img.shields.io/badge/GitAgent-Hackathon-orange)](https://gitagent.sh)
 [![Changelog](https://img.shields.io/badge/changelog-v0.2.0-informational)](CHANGELOG.md)
 
-> **Your brutally honest senior engineer, automated.**
+RepoMedic audits GitHub repositories and local codebases, then returns a single health report covering structure, security, documentation, tests, and dependencies.
 
-RepoMedic is a git-native AI agent that analyzes any GitHub repository and produces a comprehensive health report covering code quality, security, documentation, tests, and dependencies — in under 60 seconds.
+## What RepoMedic checks
 
----
+RepoMedic runs six skills in sequence:
 
-## 🎯 What It Does
+| Skill | Focus |
+| --- | --- |
+| `repo-analysis` | Structure, architecture, language detection, repo hygiene |
+| `security-scan` | Secrets, tokens, risky config, disclosure policy, automation gaps |
+| `doc-analysis` | README completeness, JSDoc coverage, doc drift |
+| `test-analysis` | Test framework detection, proxy coverage, critical-path gaps, anti-patterns |
+| `dependency-analysis` | Lockfiles, version gaps, deprecations, license risk, known vulnerable packages |
+| `scoring` | Weighted score, ranked issues, quick wins, risk radar |
 
-RepoMedic runs **6 sequential skills** against any repository:
-
-| Skill | What It Checks |
-|-------|----------------|
-| 🔍 **repo-analysis** | Structure, architecture, file classification |
-| 🔒 **security-scan** | Secrets, tokens, keys, misconfigurations |
-| 📝 **doc-analysis** | README completeness, JSDoc, doc drift |
-| 🧪 **test-analysis** | Coverage proxy, critical path testing, anti-patterns |
-| 📦 **dependency-analysis** | Outdated deps, CVE patterns, license risks |
-| 📊 **scoring** | Weighted 0–100 health score + full report |
-
----
-
-## 🚀 Quick Start
+## Quick start
 
 ### Requirements
-- Node.js ≥ 18.0.0
-- npm ≥ 8.0.0
-- Internet access (for GitHub API + npm registry)
 
-### Installation
+- Node.js 18 or newer
+- npm 8 or newer
+- Internet access if you want live GitHub and npm registry checks
+
+### Install
 
 ```bash
-# Clone the repo
-git clone https://github.com/your-org/repomedic-agent
-cd repomedic-agent
-
-# Install dependencies
+git clone https://github.com/Tayab-Ahamed/RepoMedic-Agent.git
+cd RepoMedic-Agent
 npm install
 ```
 
-### Run Analysis
+### Run an analysis
 
 ```bash
-# Analyze any public GitHub repo
+# Public GitHub repository
 node src/index.js --repo https://github.com/expressjs/express
 
-# Analyze a local repo
-node src/index.js --repo ./my-project
+# Local repository
+node src/index.js --repo .
 
-# Analyze a private repo (with PAT)
-node src/index.js --repo https://github.com/org/private-repo --pat ghp_yourtoken
+# Private GitHub repository
+node src/index.js --repo https://github.com/owner/private-repo --pat ghp_yourtoken
 
-# Save report to JSON file
+# Save the full report
 node src/index.js --repo https://github.com/owner/repo --output report.json
 
-# Output raw JSON only (for CI/CD pipelines)
+# JSON only
 node src/index.js --repo https://github.com/owner/repo --json
 ```
 
-### Run Demo
+### Development commands
 
 ```bash
-# Live demo against express.js
-npm run demo
-
-# Offline demo with pre-built sample report
-node example-usage/run-example.js --offline
+npm test
+npm run lint
+npm run validate
+npm run demo -- --offline
 ```
 
-### Validate Agent Definition
+## Report shape
 
-```bash
-npm run validate   # npx gitagent validate
-npm run info       # npx gitagent info
-```
-
----
-
-## 📊 Output Format
-
-RepoMedic produces a structured JSON report:
+RepoMedic returns a structured JSON object:
 
 ```json
 {
-  "score": 72,
-  "grade": "C",
-  "label": "Fair — Needs Attention",
+  "score": 94,
+  "grade": "A",
+  "label": "Excellent - Production Ready",
   "breakdown": {
-    "code_quality": 20,
-    "docs": 15,
-    "security": 18,
-    "tests": 12,
-    "dependencies": 7
+    "code_quality": 25,
+    "docs": 14,
+    "security": 20,
+    "tests": 20,
+    "dependencies": 15
   },
-  "issues": [...],
-  "recommendations": [...],
+  "issues": [],
+  "recommendations": [],
   "ai_insights": {
-    "top_issues": [...],
-    "quick_wins": [...],
-    "risks": [...]
+    "top_issues": [],
+    "quick_wins": [],
+    "risks": []
   },
   "summary": "..."
 }
 ```
 
-### Score Grades
+### Score bands
 
 | Score | Grade | Meaning |
-|-------|-------|---------|
-| 90–100 | A | Excellent — Production Ready |
-| 80–89 | B | Good — Minor Issues |
-| 70–79 | C | Fair — Needs Attention |
-| 60–69 | D | Poor — Significant Gaps |
-| 50–59 | E | Weak — High Risk |
-| < 50 | F | Critical — Do Not Ship |
+| --- | --- | --- |
+| 90-100 | A | Excellent - Production Ready |
+| 80-89 | B | Good - Minor Issues |
+| 70-79 | C | Fair - Needs Attention |
+| 60-69 | D | Poor - Significant Gaps |
+| 50-59 | E | Weak - High Risk |
+| Below 50 | F | Critical - Do Not Ship |
 
----
+## Console output
 
-## 🖥 Console Output
+A typical run prints a compact summary to stdout and can optionally write the full JSON report to disk:
 
-```
-╔════════════════════════════════════════════╗
-║        🏥  RepoMedic Health Report          ║
-╠════════════════════════════════════════════╣
-║  Repo:     expressjs/express               ║
-║  Score:    74/100  Grade: C                ║
-║  Findings: 2 high, 7 medium, 5 low         ║
-╠════════════════════════════════════════════╣
-║  Code Quality   ████████░░  20/25          ║
-║  Documentation  ███████░░░  15/20          ║
-║  Security       █████████░  18/20          ║
-║  Tests          ██████░░░░  12/20          ║
-║  Dependencies   ███░░░░░░░   9/15          ║
-╚════════════════════════════════════════════╝
+```text
+RepoMedic - Repository Health Analyzer
+--------------------------------------------------
+Score: 91/100 (A)
+Findings: 1 high, 2 medium, 3 low
+Weakest area: docs (16/20)
+Top issue: missing SECURITY.md
 ```
 
----
+## CLI flags
 
-## 🔒 Security Scanning
+| Flag | Description |
+| --- | --- |
+| `--repo` | GitHub URL or local path to analyze |
+| `--branch` | Branch to inspect when analyzing GitHub repos |
+| `--pat` | GitHub personal access token for private repos |
+| `--output` | Write the JSON report to a file |
+| `--json` | Print JSON only |
+| `--no-registry` | Skip npm registry lookups for faster offline-oriented runs |
+| `--help` | Show CLI help |
 
-RepoMedic's **SecretSweep** skill detects:
+## Project layout
 
-- AWS Access Keys, GitHub PATs, Slack tokens
-- Stripe live keys, OpenAI API keys
-- Hardcoded passwords and database URLs
-- Private RSA/EC/PGP keys
-- High-entropy strings in sensitive variables
-
-All matches are **masked** in output — raw secrets are never stored or transmitted.
-
----
-
-## 🏗 Architecture
-
-```
+```text
 repomedic-agent/
-├── agent.yaml              # gitagent manifest
-├── SOUL.md                 # Agent identity & personality
-├── RULES.md                # Hard constraints & output contract
-├── AGENTS.md               # Framework-agnostic fallback instructions
-├── CHANGELOG.md            # Version history
-├── CONTRIBUTING.md         # Contribution guide
-├── SECURITY.md             # Vulnerability disclosure policy
-├── CODE_OF_CONDUCT.md      # Community standards
-├── .env.example            # Environment variable template
-├── skills/                 # 6 skill definitions (SKILL.md)
-│   ├── repo-analysis/
-│   ├── security-scan/
-│   ├── doc-analysis/
-│   ├── test-analysis/
-│   ├── dependency-analysis/
-│   └── scoring/
-├── tools/                  # MCP-compatible tool YAML schemas
-│   ├── repo-fetch.yaml
-│   ├── file-reader.yaml
-│   ├── dependency-parser.yaml
-│   └── secret-scanner.yaml
-├── workflows/              # Multi-step procedure definitions
-│   ├── full-audit.yaml     # Complete 6-skill audit
-│   └── security-only.yaml # Fast security-focused scan
-├── examples/               # Calibration interactions (few-shot)
-│   ├── good-repo.md        # High-score calibration
-│   ├── bad-repo.md         # Low-score calibration
-│   └── edge-cases.md       # Tricky repo handling rules
-├── knowledge/              # Agent reference knowledge
-├── memory/                 # Persistent agent memory
-├── hooks/                  # Lifecycle hooks
-├── src/                    # Node.js implementation
-│   ├── cli.js              # npx repomedic bin entry
-│   ├── index.js            # Main orchestrator + CLI
-│   ├── tools/              # Tool implementations
-│   └── analyzers/          # Per-skill analyzers
-└── example-usage/          # Demo scripts + sample report
+|-- .github/
+|   |-- dependabot.yml
+|   `-- workflows/
+|-- skills/
+|-- tools/
+|-- workflows/
+|-- src/
+|   |-- __tests__/
+|   |-- analyzers/
+|   |-- tools/
+|   |-- cli.js
+|   `-- index.js
+|-- scripts/
+|-- example-usage/
+|-- AGENTS.md
+|-- RULES.md
+|-- SOUL.md
+`-- agent.yaml
 ```
 
----
+## Notes
 
-## 🔧 Configuration
-
-| Flag | Default | Description |
-|------|---------|-------------|
-| `--repo` | required | GitHub URL or local path |
-| `--branch` | `main` | Branch to analyze |
-| `--pat` | — | GitHub PAT for private repos |
-| `--output` | — | Save JSON report to file |
-| `--json` | false | Print raw JSON only |
-| `--no-registry` | false | Skip npm registry (faster, offline) |
-
----
-
-## 🧬 gitagent Compliance
-
-This agent is fully compliant with the gitagent 0.1.0 specification:
-
-- ✅ `agent.yaml` with `spec_version`, `model`, `skills`, `tags`
-- ✅ `SOUL.md` with identity, communication style, and values
-- ✅ `RULES.md` with must-always / must-never / output contract
-- ✅ 6 `skills/` with YAML frontmatter and detailed instructions
-- ✅ 4 `tools/` with MCP-compatible YAML schemas
-- ✅ `knowledge/`, `memory/`, `hooks/` directories
-- ✅ Node.js only — no Python, no Docker, clawless compatible
-- ✅ `npx gitagent validate` passes
-
----
-
-## 📄 License
-
-MIT — See [LICENSE](LICENSE)
-
----
-
-## 🏆 Built for the GitAgent Hackathon
-
-> *"Your agent is only as good as its soul. RepoMedic's soul is a brutally honest senior engineer who has read every CVE report published since 2018."*
+- Local path analysis normalizes Windows and Unix-style paths before scoring.
+- Secrets are always masked in findings.
+- The repo includes tests, lint checks, GitHub Actions validation, and self-audit coverage for the core pipeline.
+- `example-usage/sample-report.json` is useful for offline demos and UI wiring.

@@ -17,13 +17,16 @@ import { analyzeTests }     from './analyzers/testAnalyzer.js';
 import { analyzeDependencies } from './analyzers/depAnalyzer.js';
 import { assembleReport, formatConsoleReport } from './analyzers/scorer.js';
 import { readFiles } from './tools/fileReader.js';
-import { writeFile } from 'fs/promises';
-import { parseArgs } from 'util';
+import { resolve } from 'node:path';
+import { writeFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
+import { parseArgs } from 'node:util';
 
 // ─── CLI Argument Parsing ─────────────────────────────────────────────────
 
-function parseCliArgs() {
+export function parseCliArgs(argv = process.argv.slice(2)) {
   const { values } = parseArgs({
+    args: argv,
     options: {
       repo:          { type: 'string',  short: 'r' },
       branch:        { type: 'string',  short: 'b', default: 'main' },
@@ -38,7 +41,7 @@ function parseCliArgs() {
   return values;
 }
 
-function printHelp() {
+export function printHelp() {
   console.log(`
 🏥 RepoMedic — Repository Health Agent
 
@@ -160,19 +163,19 @@ export async function runAnalysis({
 
 // ─── CLI Entry Point ──────────────────────────────────────────────────────
 
-async function main() {
-  const args = parseCliArgs();
+export async function main(argv = process.argv.slice(2)) {
+  const args = parseCliArgs(argv);
 
-  if (args.help || (!args.repo && !args.r)) {
+  if (args.help) {
     printHelp();
-    process.exit(0);
+    return 0;
   }
 
-  const repo = args.repo || args.r;
+  const repo = args.repo;
   if (!repo) {
     console.error('Error: --repo is required.');
     printHelp();
-    process.exit(1);
+    return 1;
   }
 
   if (!args.json) {
@@ -204,13 +207,20 @@ async function main() {
 
     // Exit with non-zero if grade is D or below
     const badGrades = ['D', 'E', 'F'];
-    process.exit(badGrades.includes(report.grade) ? 1 : 0);
+    return badGrades.includes(report.grade) ? 1 : 0;
 
   } catch (err) {
     console.error(`\n❌ Error: ${err.message}`);
     if (err.code) console.error(`   Code: ${err.code}`);
-    process.exit(2);
+    return 2;
   }
 }
 
-main();
+const isDirectExecution = process.argv[1]
+  && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+
+if (isDirectExecution) {
+  const exitCode = await main();
+  process.exit(exitCode);
+}
+ 

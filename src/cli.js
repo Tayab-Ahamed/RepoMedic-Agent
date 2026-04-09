@@ -8,4 +8,7 @@
  *   repomedic --repo ./local-path --output report.json
  */
 
-import './index.js';
+import { main } from './index.js';
+
+const exitCode = await main();
+process.exit(exitCode);

@@ -1,44 +1,37 @@
 #!/usr/bin/env node
 /**
- * RepoMedic — Demo Runner
- *
- * Runs the agent against a real public GitHub repository and prints the full report.
- * Uses the express.js repo as a canonical test target.
- *
- * Usage:
- *   node example-usage/run-example.js
- *   node example-usage/run-example.js --repo https://github.com/your/repo
- *   node example-usage/run-example.js --offline   (uses bundled mock data)
+ * RepoMedic demo runner.
  */
 
-import { runAnalysis }       from '../src/index.js';
+import { readFile, writeFile } from 'node:fs/promises';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 import { formatConsoleReport } from '../src/analyzers/scorer.js';
-import { writeFile }         from 'fs/promises';
-import { join, dirname }     from 'path';
-import { fileURLToPath }     from 'url';
+import { runAnalysis } from '../src/index.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-
 const DEFAULT_DEMO_REPO = 'https://github.com/expressjs/express';
 
 async function runDemo() {
   const args = process.argv.slice(2);
-  const repoFlag = args.findIndex(a => a === '--repo' || a === '-r');
+  const repoFlag = args.findIndex((arg) => arg === '--repo' || arg === '-r');
   const isOffline = args.includes('--offline');
-
   const targetRepo = repoFlag !== -1 ? args[repoFlag + 1] : DEFAULT_DEMO_REPO;
 
-  console.log('\n' + '═'.repeat(55));
-  console.log('  🏥 RepoMedic — Hackathon Demo Run');
-  console.log('═'.repeat(55));
+  console.log('\n' + '='.repeat(55));
+  console.log('  RepoMedic demo');
+  console.log('='.repeat(55));
   console.log(`  Target: ${targetRepo}`);
-  console.log('═'.repeat(55) + '\n');
+  console.log('='.repeat(55) + '\n');
 
   if (isOffline) {
-    // Load pre-bundled mock report for offline demos
-    const { default: mockReport } = await import('./sample-report.json', { assert: { type: 'json' } });
+    const mockReport = JSON.parse(
+      await readFile(join(__dirname, 'sample-report.json'), 'utf-8')
+    );
+
     console.log(formatConsoleReport(mockReport));
-    console.log('\n✅ Demo complete (offline mode — showing sample report)\n');
+    console.log('\nDemo complete (offline mode)\n');
     return;
   }
 
@@ -50,61 +43,57 @@ async function runDemo() {
       repo: targetRepo,
       branch: 'main',
       check_registry: true,
-      onProgress: (msg, icon) => {
-        console.log(`  ${icon || '→'} ${msg}`);
+      onProgress: (message, icon) => {
+        console.log(`  ${icon || '->'} ${message}`);
       }
     });
 
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-
-    // Console display
-    console.log(formatConsoleReport(report));
-
-    // Save to file
     const outputPath = join(__dirname, 'live-report.json');
+
+    console.log(formatConsoleReport(report));
     await writeFile(outputPath, JSON.stringify(report, null, 2), 'utf-8');
 
-    console.log('━'.repeat(55));
-    console.log(`  ⏱  Analysis completed in ${elapsed}s`);
-    console.log(`  📁  Full JSON report: example-usage/live-report.json`);
-    console.log(`  📊  Score: ${report.score}/100 (${report.grade} — ${report.label})`);
-    console.log(`  🔍  Total findings: ${report.meta.total_findings}`);
-    console.log('━'.repeat(55) + '\n');
+    console.log('-'.repeat(55));
+    console.log(`  Analysis completed in ${elapsed}s`);
+    console.log('  Full JSON report: example-usage/live-report.json');
+    console.log(`  Score: ${report.score}/100 (${report.grade})`);
+    console.log(`  Total findings: ${report.meta.total_findings}`);
+    console.log('-'.repeat(55) + '\n');
 
-    // Print top 5 issues summary
     if (report.ai_insights.top_issues.length > 0) {
-      console.log('🔴 TOP 5 ISSUES:');
+      console.log('Top issues:');
       for (const issue of report.ai_insights.top_issues) {
-        const sev = issue.severity === 'high' ? '🔴' : issue.severity === 'medium' ? '🟡' : '🟢';
-        console.log(`  ${issue.rank}. ${sev} [${issue.severity.toUpperCase()}] ${issue.title}`);
-        console.log(`      → ${issue.one_liner}`);
+        console.log(`  ${issue.rank}. [${issue.severity.toUpperCase()}] ${issue.title}`);
+        console.log(`     ${issue.one_liner}`);
       }
       console.log('');
     }
 
     if (report.ai_insights.quick_wins.length > 0) {
-      console.log('✅ QUICK WINS:');
+      console.log('Quick wins:');
       for (const win of report.ai_insights.quick_wins) {
-        console.log(`  • ${win.title}`);
-        if (win.action) console.log(`    Action: ${win.action.substring(0, 80)}`);
+        console.log(`  - ${win.title}`);
+        if (win.action) {
+          console.log(`    Action: ${win.action.substring(0, 80)}`);
+        }
       }
       console.log('');
     }
 
     if (report.ai_insights.risks.length > 0) {
-      console.log('⚠️  RISK RADAR:');
+      console.log('Risk radar:');
       for (const risk of report.ai_insights.risks) {
-        console.log(`  • [${risk.probability.toUpperCase()} probability / ${risk.impact.toUpperCase()} impact] ${risk.title}`);
+        console.log(`  - [${risk.probability.toUpperCase()} / ${risk.impact.toUpperCase()}] ${risk.title}`);
       }
       console.log('');
     }
-
   } catch (err) {
-    console.error(`\n❌ Demo failed: ${err.message}`);
-    console.error('   Try running with --offline to see a sample report.');
-    console.error('   Or check your internet connection and try again.\n');
+    console.error(`\nDemo failed: ${err.message}`);
+    console.error('Try running with --offline to see the bundled sample report.');
+    console.error('If you expected a live run, check internet access and try again.\n');
     process.exit(1);
   }
 }
 
-runDemo();
+await runDemo();
