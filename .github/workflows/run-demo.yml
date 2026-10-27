@@ -15,9 +15,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - run: npm install -g @open-gitagent/gitagent
-      - run: npx gitagent validate
-      - run: npx gitagent info
+      - run: npm install -g @open-gitagent/opengap@0.5.0
+      - run: opengap validate
+      - run: opengap info
 
   self-audit:
     name: RepoMedic Self-Audit
