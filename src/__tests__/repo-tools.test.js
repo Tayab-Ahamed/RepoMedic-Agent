@@ -8,6 +8,46 @@ import { analyzeRepo } from '../analyzers/repoAnalyzer.js';
 import { readFiles } from '../tools/fileReader.js';
 import { fetchRepo } from '../tools/repoFetch.js';
 
+test('fetchRepo honors the branch option when the URL has no tree ref', async (t) => {
+  const requests = [];
+  t.mock.method(globalThis, 'fetch', async (url) => {
+    requests.push(String(url));
+    if (String(url).includes('/git/trees/')) {
+      return new Response(JSON.stringify({
+        tree: [{ type: 'blob', path: 'README.md', size: 12, sha: 'fixture' }],
+        truncated: false
+      }));
+    }
+    return new Response('release notes');
+  });
+
+  const result = await fetchRepo({
+    source: 'https://github.com/example/project',
+    branch: 'release',
+    include_content: true
+  });
+
+  assert.equal(result.branch, 'release');
+  assert.ok(requests[0].includes('/git/trees/release?'));
+  assert.ok(requests[1].includes('/project/release/README.md'));
+  assert.equal(result.tree[0].content, 'release notes');
+});
+
+test('fetchRepo keeps an explicit URL tree ref ahead of the branch option', async (t) => {
+  t.mock.method(globalThis, 'fetch', async () => new Response(JSON.stringify({
+    tree: [],
+    truncated: false
+  })));
+
+  const result = await fetchRepo({
+    source: 'https://github.com/example/project/tree/develop',
+    branch: 'release'
+  });
+
+  assert.equal(result.branch, 'develop');
+});
+
+
 async function writeFiles(root, files) {
   for (const [relativePath, content] of Object.entries(files)) {
     const targetPath = join(root, relativePath);
