@@ -49,12 +49,12 @@ function shouldIncludeContent(filePath, extension, contentExtensions) {
 /**
  * Parse GitHub URL into owner/repo/branch.
  * @param {string} url
- * @returns {{ owner: string, repo: string, branch: string }}
+ * @returns {{ owner: string, repo: string, branch: string | null }}
  */
 function parseGitHubUrl(url) {
   const match = url.match(/github\.com\/([^/]+)\/([^/]+?)(?:\.git)?(?:\/tree\/([^/]+))?(?:\/|$)/);
   if (!match) throw new Error(`Invalid GitHub URL: ${url}`);
-  return { owner: match[1], repo: match[2], branch: match[3] || 'main' };
+  return { owner: match[1], repo: match[2], branch: match[3] || null };
 }
 
 /**

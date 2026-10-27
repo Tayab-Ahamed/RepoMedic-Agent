@@ -70,5 +70,5 @@ node src/index.js --repo https://github.com/owner/repo
 node example-usage/run-example.js --offline
 
 # Validate spec compliance
-npx gitagent validate
+npm run validate
 ```
